@@ -18,7 +18,7 @@
 <main id="book"></main>
 
 <div id="empty" hidden>
-  <button id="openBig" type="button">Open PDF</button>
+  <label id="openBig" for="file" role="button">Open PDF</label>
   <ul id="recent"></ul>
 </div>
 
@@ -26,9 +26,9 @@
 
 <div id="tools">
   <div id="row" hidden>
-    <button id="open" type="button" aria-label="Open PDF">
-      <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>
-    </button>
+    <label id="open" for="file" role="button" aria-label="Load a new PDF">
+      <svg viewBox="0 0 16 16"><path d="M9.5 1.5H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5z"/><path d="M9.5 1.5V5H13M8 12.5V7.5M5.8 9.6 8 7.4l2.2 2.2"/></svg>
+    </label>
     <button id="smaller" type="button" aria-label="Smaller text" class="a">A</button>
     <button id="bigger" type="button" aria-label="Bigger text" class="a big">A</button>
     <button id="mode" type="button" aria-label="Change colour mode"><i></i></button>
@@ -38,7 +38,7 @@
   </button>
 </div>
 
-<input id="file" type="file" accept="application/pdf,.pdf" hidden>
+<input id="file" type="file" accept="application/pdf,.pdf">
 <script type="module" src="app.js"></script>
 </body>
 </html>

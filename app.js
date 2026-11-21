@@ -280,10 +280,7 @@ function changeFs(d) {
   setPos(p);
 }
 
-const pick = () => $('file').click();
 $('file').addEventListener('change', (e) => { openFile(e.target.files[0]); e.target.value = ''; });
-$('openBig').addEventListener('click', pick);
-$('open').addEventListener('click', pick);
 $('smaller').addEventListener('click', () => changeFs(-2));
 $('bigger').addEventListener('click', () => changeFs(2));
 $('mode').addEventListener('click', () => setMode(MODES[(MODES.indexOf(mode) + 1) % MODES.length]));

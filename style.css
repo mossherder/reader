@@ -37,6 +37,7 @@ body {
 }
 #empty[hidden] { display: none; }
 #openBig {
+  cursor: pointer;
   font: inherit; color: var(--fg); background: none;
   border: 1px solid var(--fg); border-radius: 999px; padding: 0.6em 1.4em;
 }
@@ -57,12 +58,13 @@ body {
   display: flex; align-items: center; gap: 2px;
   background: var(--bg);
   border-radius: 15px;
+  z-index: 10;
 }
-#tools button { opacity: 0.45; transition: opacity 0.2s; }
-#tools.open button { opacity: 0.85; }
+#tools > *, #row > * { opacity: 0.45; transition: opacity 0.2s; }
+#tools.open > *, #tools.open #row > * { opacity: 0.85; }
 #row { display: flex; align-items: center; gap: 2px; }
 #row[hidden] { display: none; }
-#tools button {
+#tools button, #tools label {
   width: 30px; height: 30px; padding: 0;
   display: grid; place-items: center;
   background: none; border: 0; color: var(--ui);
@@ -81,3 +83,6 @@ html[data-mode="light"] #mode i { background: linear-gradient(90deg, currentColo
 #book p { white-space: pre-line; }
 #book .gap { height: 1.4em; }
 #book hr { width: 2em; margin: 1.6em auto; border: 0; border-top: 1px solid currentColor; opacity: 0.2; }
+
+/* file input: visually hidden but still clickable through its <label> (more reliable on iOS than display:none) */
+#file { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -10px; top: 0; }
