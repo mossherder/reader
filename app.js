@@ -324,4 +324,19 @@ setMode('red');
   updatePage();
 })();
 
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// ---------- updates ----------
+// Home Screen apps usually resume instead of relaunching, so check for a new version whenever the
+// app comes back to the foreground. When a new version takes over, reload once (position is saved).
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return; // first install: nothing to refresh
+    reloading = true;
+    savePos();
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(() => {}); });
+  }).catch(() => {});
+}
