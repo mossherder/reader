@@ -61,6 +61,12 @@ function appendBlocks(from) {
   bookEl.appendChild(frag);
 }
 function renderAll() {
+  // books saved before page numbers existed: derive pages from the page-break markers
+  if (!book.numPages) {
+    let pg = 1;
+    for (const b of book.blocks) { if (b[0] === 'pg') pg++; b[2] = pg; }
+    book.numPages = pg;
+  }
   bookEl.textContent = '';
   els = [];
   appendBlocks(0);
@@ -97,7 +103,18 @@ function savePos() {
   ls.set('lib', lib);
 }
 let saveTimer;
-addEventListener('scroll', () => { clearTimeout(saveTimer); saveTimer = setTimeout(savePos, 300); }, { passive: true });
+// ---------- page label ("3/145") ----------
+function updatePage() {
+  const el = $('page');
+  if (!book || !els.length) { el.hidden = true; return; }
+  el.textContent = `${book.blocks[topIndex()][2] || 1}/${book.numPages}`;
+  el.hidden = false;
+}
+let pageFrame = 0;
+addEventListener('scroll', () => {
+  clearTimeout(saveTimer); saveTimer = setTimeout(savePos, 300);
+  if (!pageFrame) pageFrame = requestAnimationFrame(() => { pageFrame = 0; updatePage(); });
+}, { passive: true });
 addEventListener('pagehide', savePos);
 document.addEventListener('visibilitychange', () => document.hidden && savePos());
 
@@ -206,7 +223,7 @@ async function openFile(file) {
   }
   const id = pdf.fingerprints[0];
   const title = file.name.replace(/\.pdf$/i, '');
-  book = { id, title, blocks: [] };
+  book = { id, title, numPages: pdf.numPages, blocks: [] };
   bookEl.textContent = '';
   els = [];
   showEmpty(false);
@@ -220,6 +237,7 @@ async function openFile(file) {
     const tc = await page.getTextContent();
     page.cleanup();
     const blocks = pageToBlocks(tc.items);
+    for (const b of blocks) b[2] = n;
     const from = book.blocks.length;
     // join a paragraph that continues across the page break (skipping the marker we left after it)
     let li = from - 1;
@@ -232,9 +250,10 @@ async function openFile(file) {
       els[li].textContent = last[1];
     }
     // page break marker (placed after any paragraph carried over from the previous page)
-    if (from && book.blocks[from - 1][0] !== 'pg') book.blocks.push(['pg', '']);
+    if (from && book.blocks[from - 1][0] !== 'pg') book.blocks.push(['pg', '', n]);
     book.blocks.push(...blocks);
     appendBlocks(from);
+    if (n === 1 || n % 10 === 0) updatePage();
     if (pendingRestore && els.length > pendingRestore.i + 1) { setPos(pendingRestore); pendingRestore = null; }
     if (n % 10 === 0 || n === pdf.numPages) status(`Loading ${Math.round((n / pdf.numPages) * 100)}%`);
   }
@@ -249,6 +268,7 @@ async function openFile(file) {
   }
   await idb('put', book, 'book');
   status('', 0);
+  updatePage();
   savePos();
 }
 
@@ -263,6 +283,7 @@ function status(msg, ms) {
 }
 function showEmpty(on) {
   $('empty').hidden = !on;
+  if (on) $('page').hidden = true;
   if (!on) return;
   const ul = $('recent');
   ul.textContent = '';
@@ -300,6 +321,7 @@ setMode('red');
   renderAll();
   const p = lib[book.id];
   if (p) setPos(p);
+  updatePage();
 })();
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

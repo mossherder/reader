@@ -86,3 +86,19 @@ html[data-mode="light"] #mode i { background: linear-gradient(90deg, currentColo
 
 /* file input: visually hidden but still clickable through its <label> (more reliable on iOS than display:none) */
 #file { position: fixed; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -10px; top: 0; }
+
+/* page label, just above the tools */
+#page {
+  position: fixed;
+  right: calc(env(safe-area-inset-right) + 12px);
+  bottom: calc(env(safe-area-inset-bottom) + 40px);
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--bg);
+  color: color-mix(in srgb, var(--ui) 55%, var(--bg));
+  font: 11px/1.2 -apple-system, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  z-index: 10;
+}
+#page[hidden] { display: none; }
