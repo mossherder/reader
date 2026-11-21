@@ -1,5 +1,5 @@
 // Offline support: serve from cache instantly, refresh the cache in the background.
-const CACHE = 'reader-v2';
+const CACHE = 'reader-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/pdf.min.mjs', 'vendor/pdf.worker.min.mjs'];

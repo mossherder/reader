@@ -113,6 +113,14 @@ async function loadPdfjs() {
 
 const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
 const isPageNum = (t) => /^\s*(page\s*)?[\divxlc]{1,6}\s*$/i.test(t);
+// Some PDFs (often old ebook conversions) encode "f" with broken font codes that show up as
+// control characters (boxes). Map control chars touching a letter back to "f"; drop any others.
+// Also expand real ligature characters (ﬁ ﬂ ﬀ ...) to plain letters.
+const LIG = { '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl', '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB05': 'st', '\uFB06': 'st' };
+const fixText = (t) => t
+  .replace(/(?<=\p{L})[\u0000-\u0008\u000B\u000C\u000E-\u001F]|[\u0000-\u0008\u000B\u000C\u000E-\u001F](?=\p{L})/gu, 'f')
+  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+  .replace(/[\uFB00-\uFB06]/g, (c) => LIG[c]);
 const ENDS = /[.!?:;"”’)\]…—–]\s*$/;
 
 function pageToBlocks(items) {
@@ -125,7 +133,7 @@ function pageToBlocks(items) {
     const h = it.height || Math.hypot(it.transform[2], it.transform[3]) || 10;
     if (cur && Math.abs(y - cur.y) > h * 0.6) { lines.push(cur); cur = null; }
     if (!cur) cur = { text: '', x, y, h: 0, r: x };
-    cur.text += it.str;
+    cur.text += fixText(it.str);
     cur.h = Math.max(cur.h, h);
     cur.x = Math.min(cur.x, x);
     cur.r = Math.max(cur.r, x + (it.width || 0));
