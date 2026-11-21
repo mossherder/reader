@@ -95,10 +95,13 @@ html[data-mode="light"] #mode i { background: linear-gradient(90deg, currentColo
   padding: 1px 4px;
   border-radius: 4px;
   background: var(--bg);
-  color: color-mix(in srgb, var(--ui) 55%, var(--bg));
+  color: var(--fg);
   font: 11px/1.2 -apple-system, system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
   z-index: 10;
 }
 #page[hidden] { display: none; }
+
+/* expand arrow matches the book text */
+#tools #toggle, #tools.open #toggle { color: var(--fg); opacity: 1; }
