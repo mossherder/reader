@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-mode="red">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Reader</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reader">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="book"></main>
+
+<div id="empty" hidden>
+  <button id="openBig" type="button">Open PDF</button>
+  <ul id="recent"></ul>
+</div>
+
+<div id="status" hidden></div>
+
+<div id="tools">
+  <div id="row" hidden>
+    <button id="open" type="button" aria-label="Open PDF">
+      <svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>
+    </button>
+    <button id="smaller" type="button" aria-label="Smaller text" class="a">A</button>
+    <button id="bigger" type="button" aria-label="Bigger text" class="a big">A</button>
+    <button id="mode" type="button" aria-label="Change colour mode"><i></i></button>
+  </div>
+  <button id="toggle" type="button" aria-label="Show tools" aria-expanded="false">
+    <svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></svg>
+  </button>
+</div>
+
+<input id="file" type="file" accept="application/pdf,.pdf" hidden>
+<script type="module" src="app.js"></script>
+</body>
+</html>
