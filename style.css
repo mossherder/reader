@@ -76,3 +76,8 @@ body {
 #mode i { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid currentColor; background: currentColor; }
 html[data-mode="dark"] #mode i { background: none; }
 html[data-mode="light"] #mode i { background: linear-gradient(90deg, currentColor 50%, transparent 50%); }
+
+/* preserved structure */
+#book p { white-space: pre-line; }
+#book .gap { height: 1.4em; }
+#book hr { width: 2em; margin: 1.6em auto; border: 0; border-top: 1px solid currentColor; opacity: 0.2; }

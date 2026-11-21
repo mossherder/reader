@@ -44,9 +44,11 @@ function setMode(m) {
 }
 
 // ---------- rendering ----------
+const TAG = { h: 'h2', p: 'p', s: 'div', pg: 'hr' };
 function makeEl([type, text]) {
-  const el = document.createElement(type === 'h' ? 'h2' : 'p');
-  el.textContent = text;
+  const el = document.createElement(TAG[type] || 'p');
+  if (type === 's') el.className = 'gap';
+  if (text) el.textContent = text;
   return el;
 }
 function appendBlocks(from) {
@@ -111,7 +113,7 @@ async function loadPdfjs() {
 
 const median = (a) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); return s[s.length >> 1]; };
 const isPageNum = (t) => /^\s*(page\s*)?[\divxlc]{1,6}\s*$/i.test(t);
-const ENDS = /[.!?:;"”’)\]]\s*$/;
+const ENDS = /[.!?:;"”’)\]…—–]\s*$/;
 
 function pageToBlocks(items) {
   // 1. group text items into lines
@@ -144,12 +146,19 @@ function pageToBlocks(items) {
   const left = median(L.filter((l) => Math.abs(l.h - bodyH) < bodyH * 0.2).map((l) => l.x)) || Math.min(...L.map((l) => l.x));
   const right = Math.max(...L.map((l) => l.r));
 
-  // 3. lines -> paragraphs / headings
+  // Lines that reach the right margin only wrapped; lines that stop short were broken on purpose.
+  // Justified text hits the margin almost exactly, so a tight threshold works; ragged-right needs slack.
+  const full = L.filter((l) => l.r > right - bodyH * 0.5).length;
+  const shortBy = full > L.length * 0.5 ? bodyH * 1.2 : bodyH * 3;
+
+  // 3. lines -> paragraphs / headings / scene gaps
   const blocks = [];
   let para = null, prev = null;
-  const flush = () => { if (para) blocks.push(['p', para.replace(/\s+/g, ' ').trim()]); para = null; };
+  const flush = () => { if (para) blocks.push(['p', para.replace(/[ \t]+/g, ' ').trim()]); para = null; };
   for (const l of L) {
     const text = l.text.replace(/\s+/g, ' ').trim();
+    const dy = prev ? prev.y - l.y : 0;
+    if (prev && dy > gap * 2.2 && (para || (blocks.length && blocks[blocks.length - 1][0] === 'p'))) { flush(); blocks.push(['s', '']); } // scene break / blank line
     if (l.h > bodyH * 1.25 && text.length < 120) {
       flush();
       const last = blocks[blocks.length - 1];
@@ -158,17 +167,20 @@ function pageToBlocks(items) {
       prev = l;
       continue;
     }
+    const short = prev && prev.r < right - shortBy;
     const newPara = !para || !prev ||
-      prev.y - l.y > gap * 1.45 ||                              // big vertical gap
-      l.x - left > bodyH * 0.8 ||                               // indented first line
-      (prev.r < right - bodyH * 3 && ENDS.test(prev.text));     // previous line ended short
+      dy > gap * 1.45 ||                       // vertical gap
+      l.x - left > bodyH * 0.8 ||              // indented first line
+      (short && ENDS.test(prev.text));         // previous line ended short at a sentence end
     if (newPara) { flush(); para = text; }
+    else if (short) para += '\n' + text;       // author's line break (verse, letters, lists)
     else if (/[A-Za-z]-$/.test(para) && /^[a-z]/.test(text)) para = para.slice(0, -1) + text; // de-hyphenate
     else para += ' ' + text;
     prev = l;
   }
   flush();
-  return blocks.filter((b) => b[1]);
+  while (blocks.length && blocks[blocks.length - 1][0] === 's') blocks.pop();
+  return blocks.filter((b) => b[0] === 's' || b[1]);
 }
 
 async function openFile(file) {
@@ -201,20 +213,25 @@ async function openFile(file) {
     page.cleanup();
     const blocks = pageToBlocks(tc.items);
     const from = book.blocks.length;
-    // join a paragraph that continues across the page break
-    const last = book.blocks[from - 1];
+    // join a paragraph that continues across the page break (skipping the marker we left after it)
+    let li = from - 1;
+    if (li >= 0 && book.blocks[li][0] === 'pg') li--;
+    const last = book.blocks[li];
     if (last && last[0] === 'p' && blocks[0] && blocks[0][0] === 'p' &&
         !ENDS.test(last[1]) && /^[a-z(“"'‘,;]/.test(blocks[0][1])) {
       const next = blocks.shift()[1];
       last[1] = /[A-Za-z]-$/.test(last[1]) ? last[1].slice(0, -1) + next : last[1] + ' ' + next;
-      els[from - 1].textContent = last[1];
+      els[li].textContent = last[1];
     }
+    // page break marker (placed after any paragraph carried over from the previous page)
+    if (from && book.blocks[from - 1][0] !== 'pg') book.blocks.push(['pg', '']);
     book.blocks.push(...blocks);
     appendBlocks(from);
     if (pendingRestore && els.length > pendingRestore.i + 1) { setPos(pendingRestore); pendingRestore = null; }
     if (n % 10 === 0 || n === pdf.numPages) status(`Loading ${Math.round((n / pdf.numPages) * 100)}%`);
   }
   pdf.destroy();
+  if (book.blocks.length && book.blocks[book.blocks.length - 1][0] === 'pg') { book.blocks.pop(); els.pop().remove(); }
   if (pendingRestore) { setPos(pendingRestore); pendingRestore = null; }
 
   if (!book.blocks.length) {
