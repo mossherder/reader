@@ -3,7 +3,7 @@
 // pdf.js (big, rarely changes): cache first.
 // Bump CACHE on every deploy: the page checks for a new sw.js when it comes back to the foreground
 // and reloads itself once the new version takes over.
-const CACHE = 'reader-v8';
+const CACHE = 'reader-v9';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icons/icon.svg', 'icons/apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'vendor/pdf.min.mjs', 'vendor/pdf.worker.min.mjs'];
