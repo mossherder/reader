@@ -133,10 +133,15 @@ const isPageNum = (t) => /^\s*(page\s*)?[\divxlc]{1,6}\s*$/i.test(t);
 // Some PDFs (often old ebook conversions) encode "f" with broken font codes that show up as
 // control characters (boxes). Map control chars touching a letter back to "f"; drop any others.
 // Also expand real ligature characters (ﬁ ﬂ ﬀ ...) to plain letters.
+// Run this on whole lines, not single text items: pdf.js often splits a word so the bad
+// character sits alone in its own item, where it has no neighbouring letter to go by.
 const LIG = { '\uFB00': 'ff', '\uFB01': 'fi', '\uFB02': 'fl', '\uFB03': 'ffi', '\uFB04': 'ffl', '\uFB05': 'st', '\uFB06': 'st' };
+const BAD = '[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F-\\u009F]'; // C0 + DEL + C1 controls
+const BAD_F = new RegExp(`(?<=\\p{L})${BAD}|${BAD}(?=\\p{L})`, 'gu');
+const BAD_ANY = new RegExp(BAD, 'g');
 const fixText = (t) => t
-  .replace(/(?<=\p{L})[\u0000-\u0008\u000B\u000C\u000E-\u001F]|[\u0000-\u0008\u000B\u000C\u000E-\u001F](?=\p{L})/gu, 'f')
-  .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '')
+  .replace(BAD_F, 'f')
+  .replace(BAD_ANY, '')
   .replace(/[\uFB00-\uFB06]/g, (c) => LIG[c]);
 const ENDS = /[.!?:;"”’)\]…—–]\s*$/;
 
@@ -150,13 +155,14 @@ function pageToBlocks(items) {
     const h = it.height || Math.hypot(it.transform[2], it.transform[3]) || 10;
     if (cur && Math.abs(y - cur.y) > h * 0.6) { lines.push(cur); cur = null; }
     if (!cur) cur = { text: '', x, y, h: 0, r: x };
-    cur.text += fixText(it.str);
+    cur.text += it.str;
     cur.h = Math.max(cur.h, h);
     cur.x = Math.min(cur.x, x);
     cur.r = Math.max(cur.r, x + (it.width || 0));
     if (it.hasEOL) { lines.push(cur); cur = null; }
   }
   if (cur) lines.push(cur);
+  for (const l of lines) l.text = fixText(l.text);
   let L = lines.filter((l) => l.text.trim());
   // drop page numbers at top/bottom
   if (L.length && isPageNum(L[0].text)) L.shift();
